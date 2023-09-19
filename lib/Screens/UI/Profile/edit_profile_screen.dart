@@ -1,8 +1,11 @@
 // ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
 
 import 'package:firebase_sample/firebase/apis.dart';
+import 'package:firebase_sample/providers/username_provider.dart';
+import 'package:firebase_sample/utils/dialogs.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -13,8 +16,12 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
+  String usernameText = APIs.me.username;
+
   @override
   Widget build(BuildContext context) {
+    final usernameProvider = Provider.of<UsernameProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: Text("Edit profile"),
@@ -34,8 +41,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 onPressed: () {
                   if (_formKey.currentState!.validate()) {
                     _formKey.currentState!.save();
-                    APIs().updateSelfInfo();
+                    APIs()
+                        .updateSelfInfo(usernameText)
+                        .then((value) => Dialogs().showSnackbar(
+                            context, "Profile Updated Successfully"))
+                        .onError((error, stackTrace) => Dialogs()
+                            .showSnackbar(context, "Something went wrong!"));
                     setState(() {});
+                    Navigator.pop(context);
                   }
                 },
                 icon: Icon(
@@ -58,8 +71,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               child: Center(
                 child: CircleAvatar(
                   radius: 50,
-                  backgroundImage: NetworkImage(
-                      "https://www.mountsinai.on.ca/wellbeing/our-team/team-images/person-placeholder/image"),
+                  backgroundImage: APIs.me.image.isEmpty
+                      ? NetworkImage(
+                          "https://www.mountsinai.on.ca/wellbeing/our-team/team-images/person-placeholder/image")
+                      : NetworkImage(APIs.me.image),
                 ),
               ),
             ),
@@ -75,7 +90,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 labelText: "Name",
               ),
               validator: (value) {
-                if (value == null || value!.isEmpty) {
+                if (value == null || value.isEmpty) {
                   return "Required Field";
                 } else {
                   return null;
@@ -88,11 +103,32 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
 
             // Username
-            TextField(
+            TextFormField(
+              onChanged: (value) async {
+                if (await APIs().checkUsernameAvailability(value)) {
+                  bool isAvailable =
+                      await APIs().checkUsernameAvailability(value);
+                  usernameProvider.usernameAvailable = isAvailable;
+                  usernameText = value;
+                } else {
+                  usernameProvider.usernameAvailable = false;
+                }
+              },
+              initialValue: APIs.me.username,
               cursorColor: Colors.white,
               decoration: InputDecoration(
                 labelText: "Username",
               ),
+              validator: (value) {
+                if (value == null || value.length < 3 || value.isEmpty) {
+                  return "Username must be 3 character long";
+                } else if (usernameText != APIs.me.username &&
+                    usernameProvider.usernameAvailable == false) {
+                  return "Username not available";
+                } else {
+                  return null;
+                }
+              },
             ),
 
             SizedBox(

@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_const_constructors
+
 import 'dart:async';
 
 import 'package:firebase_sample/Screens/AuthScreen/login_page.dart';
@@ -16,13 +18,14 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    APIs().getSelfInfo();
     Timer(const Duration(seconds: 2), () {
-      if (APIs().auth.currentUser != null) {
-        Navigator.pushReplacement(context,
-            MaterialPageRoute(builder: (_) => const NavigationScreen()));
+      if (APIs().auth.currentUser == null) {
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (_) => LoginScreen()));
       } else {
         Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+            context, MaterialPageRoute(builder: (_) => NavigationScreen()));
       }
     });
   }

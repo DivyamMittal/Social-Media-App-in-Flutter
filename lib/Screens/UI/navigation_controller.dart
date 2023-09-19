@@ -1,7 +1,7 @@
 // ignore_for_file: prefer_const_constructors
 
 import 'package:firebase_sample/Screens/UI/activity_screen.dart';
-import 'package:firebase_sample/Screens/UI/create_screen.dart';
+import 'package:firebase_sample/Screens/UI/Create%20Post/create_post.dart';
 import 'package:firebase_sample/Screens/UI/home_screen.dart';
 import 'package:firebase_sample/Screens/UI/Profile/profile_screen.dart';
 import 'package:firebase_sample/Screens/UI/search_screen.dart';
@@ -28,16 +28,18 @@ class _NavigationScreenState extends State<NavigationScreen> {
   List<Widget> widgetList = [
     HomeScreen(),
     SearchScreen(),
-    CreateScreen(),
+    CreatePostScreen(),
     ActivityScreen(),
     FutureBuilder(
       future:
           APIs().getSelfInfo(), // Use the same instance to ensure consistency
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return CircularProgressIndicator(); // You can use a loading indicator here
+          return Center(
+              child:
+                  CircularProgressIndicator()); // You can use a loading indicator here
         } else if (snapshot.hasError) {
-          return Text("Error loading profile"); // Handle error
+          return Center(child: Text("Error loading profile")); // Handle error
         } else {
           return ProfileScreen(); // Pass the initialized me data
         }

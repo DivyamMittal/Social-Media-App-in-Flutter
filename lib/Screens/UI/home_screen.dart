@@ -1,6 +1,7 @@
 // ignore_for_file: prefer_const_constructors
 
 import 'package:firebase_sample/Screens/AuthScreen/login_page.dart';
+import 'package:firebase_sample/Screens/UI/Posts/post_tile.dart';
 import 'package:firebase_sample/firebase/apis.dart';
 import 'package:firebase_sample/utils/dialogs.dart';
 import 'package:flutter/material.dart';
@@ -39,6 +40,15 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           )
         ],
+      ),
+
+      // body
+
+      body: ListView.builder(
+        itemCount: 2,
+        itemBuilder: (context, index) {
+          return PostTileUi();
+        },
       ),
     );
   }

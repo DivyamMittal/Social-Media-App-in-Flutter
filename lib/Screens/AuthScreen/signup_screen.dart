@@ -72,16 +72,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                       TextFormField(
                         onChanged: (value) async {
-                          // if (await APIs().checkUsernameAvailability(
-                          //     _usernameController.text)) {
-                          //   bool isAvailable =
-                          //       await APIs().checkUsernameAvailability(value);
-                          //   usernameProvider
-                          //       .updateUsernameAvailability(isAvailable);
-                          // } else {
-                          //   usernameProvider.updateUsernameAvailability(false);
-                          // }
-                          // log("username available: $usernameAvailable");
+                          if (await APIs().checkUsernameAvailability(
+                              _usernameController.text)) {
+                            bool isAvailable = await APIs()
+                                .checkUsernameAvailability(
+                                    _usernameController.text);
+                            usernameProvider.usernameAvailable = isAvailable;
+                          } else {
+                            usernameProvider.usernameAvailable = false;
+                          }
                         },
                         controller: _usernameController,
                         decoration: InputDecoration(
@@ -102,6 +101,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                       usernameProvider.usernameAvailable =
                                           false;
                                     }
+                                    // usernameProvider
+                                    //     .updateUsernameAvailability();
                                     // log("username available: $usernameAvailable");
                                     // log("username: ${await APIs().checkUsernameAvailability("divyam")}");
                                   },
@@ -187,7 +188,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           child: ElevatedButton(
                               onPressed: () async {
                                 if (_formKey.currentState!.validate() &&
-                                    usernameAvailable == true) {
+                                    usernameProvider.usernameAvailable ==
+                                        true) {
                                   await APIs()
                                       .auth
                                       .createUserWithEmailAndPassword(

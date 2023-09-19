@@ -5,49 +5,44 @@ import 'package:firebase_sample/Screens/UI/Profile/edit_profile_screen.dart';
 import 'package:firebase_sample/Screens/UI/Profile/followers_list.dart';
 import 'package:firebase_sample/firebase/apis.dart';
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
-class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({
+class UserProfile extends StatefulWidget {
+  const UserProfile({
     super.key,
+    required this.user,
   });
-  // final UserModel user;
+  final UserModel user;
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  State<UserProfile> createState() => _UserProfileState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    // APIs().getSelfInfo();
-  }
+class _UserProfileState extends State<UserProfile> {
+  late bool isFollowing;
 
   @override
   Widget build(BuildContext context) {
-    late UserModel myInfo;
+    // bool isFollowing = await APIs().isFollow(widget.user);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(APIs.me.username),
+        appBar: AppBar(
+          title: Text(widget.user.username),
+          centerTitle: true,
+          backgroundColor: Colors.black,
+        ),
         backgroundColor: Colors.black,
-        actions: [
-          IconButton(
-              onPressed: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => EditProfileScreen()));
-              },
-              icon: Icon(Icons.edit))
-        ],
-      ),
-      backgroundColor: Colors.black,
-      body: StreamBuilder(
-          stream: APIs().getMyInfo(),
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              myInfo = UserModel.fromJson(
-                  snapshot.data!.data() as Map<String, dynamic>);
+        body: StreamBuilder<bool>(
+          stream: APIs().isFollow(widget.user),
+          builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(
+                  child:
+                      CircularProgressIndicator()); // Display a loading indicator while waiting
+            } else if (snapshot.hasError) {
+              return Text('Error: ${snapshot.error}');
+            } else {
+              bool isFollowing = snapshot.data ?? false;
+
+              // content
               return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -72,7 +67,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 10),
                       child: Center(
                         child: Text(
-                          myInfo.name,
+                          widget.user.name,
                           style: TextStyle(fontSize: 20, color: Colors.white),
                         ),
                       ),
@@ -86,7 +81,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 10),
                       child: Center(
                         child: Text(
-                          myInfo.bio,
+                          widget.user.bio,
                           maxLines: 4,
                           textAlign: TextAlign.left,
                           style: TextStyle(fontSize: 17, color: Colors.white),
@@ -101,7 +96,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           Text.rich(TextSpan(
-                              text: APIs.me.numPosts,
+                              text: widget.user.numPosts,
                               style:
                                   TextStyle(color: Colors.white, fontSize: 20),
                               children: [
@@ -110,7 +105,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     style: TextStyle(fontSize: 16))
                               ])),
                           StreamBuilder(
-                              stream: APIs().getFollowersList(APIs.me),
+                              stream: APIs().getFollowersList(widget.user),
                               builder: (context, snapshot) {
                                 if (snapshot.hasData) {
                                   return InkWell(
@@ -119,7 +114,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           context,
                                           MaterialPageRoute(
                                               builder: (_) => FollowersList(
-                                                    user: APIs.me,
+                                                    user: widget.user,
                                                     initialIndex: 0,
                                                   )));
                                     },
@@ -134,11 +129,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         ])),
                                   );
                                 } else {
-                                  return CircularProgressIndicator();
+                                  return Container();
                                 }
                               }),
                           StreamBuilder(
-                              stream: APIs().getFollowingList(APIs.me),
+                              stream: APIs().getFollowingList(widget.user),
                               builder: (context, snapshot) {
                                 if (snapshot.hasData) {
                                   return InkWell(
@@ -147,7 +142,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           context,
                                           MaterialPageRoute(
                                               builder: (_) => FollowersList(
-                                                    user: APIs.me,
+                                                    user: widget.user,
                                                     initialIndex: 1,
                                                   )));
                                     },
@@ -162,19 +157,64 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         ])),
                                   );
                                 } else {
-                                  return CircularProgressIndicator();
+                                  return Container();
                                 }
                               })
                         ],
                       ),
-                    )
+                    ),
+
+                    // follow button
+                    Row(
+                      mainAxisAlignment: isFollowing
+                          ? MainAxisAlignment.spaceEvenly
+                          : MainAxisAlignment.center,
+                      children: [
+                        MaterialButton(
+                          onPressed: () {
+                            if (isFollowing) {
+                              APIs().unFollowUser(widget.user);
+                              isFollowing = false;
+                            } else {
+                              APIs().followUser(widget.user);
+                              isFollowing = true;
+                            }
+                            // setState(() {});
+                          },
+                          color: isFollowing
+                              ? Color.fromARGB(255, 77, 77, 77)
+                              : Colors.blue,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                          child: isFollowing
+                              ? Text(
+                                  "Unfollow",
+                                  style: TextStyle(fontSize: 16),
+                                )
+                              : Text(
+                                  "Follow",
+                                  style: TextStyle(fontSize: 16),
+                                ),
+                        ),
+
+                        // message button
+                        // isFollowing
+                        //     ? MaterialButton(
+                        //         onPressed: () {},
+                        //         color: const Color.fromARGB(255, 77, 77, 77),
+                        //         shape: RoundedRectangleBorder(
+                        //             borderRadius: BorderRadius.circular(10)),
+                        //         child: Text(
+                        //           "Message",
+                        //           style: TextStyle(fontSize: 16),
+                        //         ),
+                        //       )
+                        //     : SizedBox()
+                      ],
+                    ),
                   ]);
-            } else {
-              return Center(
-                child: CircularProgressIndicator(),
-              );
             }
-          }),
-    );
+          },
+        ));
   }
 }
